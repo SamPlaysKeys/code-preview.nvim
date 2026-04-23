@@ -2,7 +2,7 @@
 
 A Neovim plugin that shows a **diff preview before your AI coding agent applies any file change** — letting you review exactly what's changing before accepting.
 
-Supports [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and [OpenCode](https://opencode.ai) as backends.
+Supports [Claude Code](https://docs.anthropic.com/en/docs/claude-code), [OpenCode](https://opencode.ai), and [Gemini CLI](https://github.com/google/gemini-cli) as backends.
 
 ---
 
@@ -54,6 +54,10 @@ Supports [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and [Open
 
 **For OpenCode backend:**
 - [OpenCode](https://opencode.ai) >= 1.3.0
+
+**For Gemini CLI backend:**
+- [Gemini CLI](https://github.com/google/gemini-cli)
+- [jq](https://jqlang.github.io/jq/) — for JSON parsing in hook scripts
 
 ---
 
@@ -110,6 +114,15 @@ require("code-preview").setup()
 7. Accept/reject in OpenCode; the diff closes automatically on accept
 8. If rejected, press `<leader>dq` to close the diff manually
 
+### Gemini CLI
+
+1. Install the plugin and call `setup()`
+2. Open a project in Neovim
+3. Run `:CodePreviewInstallGeminiCliHooks` — writes hooks and policies to your home directory (`~/.gemini/`) to enable it for all your projects.
+   - *(Alternatively, use `:CodePreviewInstallGeminiCliHooksLocal` for a single project.)*
+4. Ask Gemini to edit a file — the diff opens in Neovim, and the CLI prompts you to "Allow/Deny"
+5. If rejected, the diff closes automatically on your next request, or press `<leader>dq` to close it manually
+
 ---
 
 ## How it works
@@ -129,6 +142,8 @@ AI Agent (terminal)                              Neovim
 ```
 
 **Claude Code** uses shell-based hooks (`PreToolUse`/`PostToolUse`) configured in `.claude/settings.local.json`.
+
+**Gemini CLI** uses shell-based hooks (`BeforeTool`/`AfterTool`) configured in `.gemini/settings.json`.
 
 **OpenCode** uses a TypeScript plugin (`tool.execute.before`/`tool.execute.after`) loaded from `.opencode/plugins/`.
 
@@ -184,6 +199,10 @@ require("code-preview").setup({
 | `:CodePreviewUninstallClaudeCodeHooks` | Remove Claude Code hooks (leaves other hooks intact) |
 | `:CodePreviewInstallOpenCodeHooks` | Install OpenCode plugin to `.opencode/plugins/` |
 | `:CodePreviewUninstallOpenCodeHooks` | Remove OpenCode plugin |
+| `:CodePreviewInstallGeminiCliHooks` | Install Gemini CLI hooks and policy globally (`~/.gemini/`) |
+| `:CodePreviewInstallGeminiCliHooksLocal` | Install Gemini CLI hooks and policy to current project |
+| `:CodePreviewUninstallGeminiCliHooks` | Remove Gemini CLI hooks and policy globally |
+| `:CodePreviewUninstallGeminiCliHooksLocal`| Remove Gemini CLI hooks and policy from current project |
 | `:CodePreviewCloseDiff` | Manually close the diff (use after rejecting a change) |
 | `:CodePreviewStatus` | Show socket path, hook status, and dependency check |
 | `:CodePreviewToggleVisibleOnly` | Toggle visible_only — show diffs only for open buffers |
@@ -370,3 +389,14 @@ vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold" }, {
 ## License
 
 MIT — see [LICENSE](LICENSE)
+
+---
+
+## Silly Section
+
+**Will this plugin fix my spaghetti code?**
+No. But it *will* vividly highlight your poor life choices in a beautiful side-by-side diff before you commit them.
+
+**Does it make me feel like a hacker from a 90s cyber-thriller?**
+Absolutely. Just vigorously mash your keyboard and whisper "I'm in." 🕶️💻✨
+

@@ -15,8 +15,20 @@ end
 
 local HOOK_MARKER = "code-preview"
 
-local function settings_path()
-  return vim.fn.getcwd() .. "/.gemini/settings.json"
+local function settings_path(global)
+  if global then
+    return vim.fn.expand("~/.gemini/settings.json")
+  else
+    return vim.fn.getcwd() .. "/.gemini/settings.json"
+  end
+end
+
+local function policy_path(global)
+  if global then
+    return vim.fn.expand("~/.gemini/policies/code-preview.toml")
+  else
+    return vim.fn.getcwd() .. "/.gemini/policies/code-preview.toml"
+  end
 end
 
 local function read_settings(path)
@@ -33,6 +45,18 @@ local function write_settings(path, data)
   vim.fn.mkdir(vim.fn.fnamemodify(path, ":h"), "p")
   local f = assert(io.open(path, "w"), "Cannot write to " .. path)
   f:write(vim.json.encode(data))
+  f:close()
+end
+
+local function write_policy(path)
+  vim.fn.mkdir(vim.fn.fnamemodify(path, ":h"), "p")
+  local f = assert(io.open(path, "w"), "Cannot write to " .. path)
+  f:write([[
+[[rule]]
+toolName = ["write_file", "replace"]
+decision = "ask_user"
+priority = 100
+]])
   f:close()
 end
 
@@ -56,7 +80,7 @@ local function remove_ours(list)
   return filtered
 end
 
-function M.install()
+function M.install(global)
   local dir = scripts_dir()
   local pre_hook  = dir .. "/gemini-pre-hook.sh"
   local post_hook = dir .. "/gemini-post-hook.sh"
@@ -66,7 +90,7 @@ function M.install()
     return
   end
 
-  local path = settings_path()
+  local path = settings_path(global)
   local data = read_settings(path)
 
   data.hooks = data.hooks or {}
@@ -83,11 +107,17 @@ function M.install()
   })
 
   write_settings(path, data)
-  vim.notify("[code-preview] Gemini CLI hooks installed -> " .. path, vim.log.levels.INFO)
+  
+  -- Automatically install the policy
+  local p_path = policy_path(global)
+  write_policy(p_path)
+
+  local scope = global and "Global " or ""
+  vim.notify("[code-preview] " .. scope .. "Gemini CLI hooks and policy installed -> " .. path, vim.log.levels.INFO)
 end
 
-function M.uninstall()
-  local path = settings_path()
+function M.uninstall(global)
+  local path = settings_path(global)
   local data = read_settings(path)
 
   if not data.hooks then
@@ -99,7 +129,15 @@ function M.uninstall()
   data.hooks.AfterTool  = remove_ours(data.hooks.AfterTool or {})
 
   write_settings(path, data)
-  vim.notify("[code-preview] Gemini CLI hooks removed from " .. path, vim.log.levels.INFO)
+
+  -- Attempt to remove the policy
+  local p_path = policy_path(global)
+  if vim.fn.filereadable(p_path) == 1 then
+    vim.fn.delete(p_path)
+  end
+
+  local scope = global and "Global " or ""
+  vim.notify("[code-preview] " .. scope .. "Gemini CLI hooks and policy removed from " .. path, vim.log.levels.INFO)
 end
 
 return M
