@@ -1,0 +1,4 @@
+[[rule]]
+toolName = ["write_file", "replace"]
+decision = "ask_user"
+priority = 100

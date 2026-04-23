@@ -102,6 +102,14 @@ function M.setup(user_config)
     require("code-preview.backends.opencode").uninstall()
   end, { desc = "Uninstall code-preview plugin from OpenCode" })
 
+  vim.api.nvim_create_user_command("CodePreviewInstallGeminiCliHooks", function()
+    require("code-preview.backends.geminicli").install()
+  end, { desc = "Install code-preview hooks for Gemini CLI" })
+
+  vim.api.nvim_create_user_command("CodePreviewUninstallGeminiCliHooks", function()
+    require("code-preview.backends.geminicli").uninstall()
+  end, { desc = "Uninstall code-preview hooks for Gemini CLI" })
+
   vim.api.nvim_create_user_command("CodePreviewCloseDiff", function()
     require("code-preview.diff").close_diff_and_clear()
   end, { desc = "Manually close code-preview diff (use after rejecting a change)" })
